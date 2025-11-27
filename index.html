@@ -1,14 +1,571 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Preet's Auction Platform | Aqua Premier League</title>
-  </head>
-  <body>
-    <!-- The root element where the React application will render -->
+    <!-- Load Tailwind CSS via CDN (Guaranteed to work) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load React and Babel (Guaranteed to work) -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.24.0/babel.min.js"></script>
+    
+    <!-- Load Lucide Icons and Firebase (Guaranteed to work) -->
+    <script type="module">
+        // Import Firebase functions directly from CDN modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, doc, updateDoc, onSnapshot, collection, query, getDocs, writeBatch, runTransaction, setLogLevel, setDoc, getDoc, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        
+        window.firebase = {
+            initializeApp,
+            getAuth, signInAnonymously, onAuthStateChanged,
+            getFirestore, doc, updateDoc, onSnapshot, collection, query, getDocs, writeBatch, runTransaction, setLogLevel, setDoc, getDoc, where
+        };
+        // Expose lucide icons as a global object so Babel can use them
+        window.lucide = {
+            LogIn: (props) => React.createElement('svg', { ...props, dangerouslySetInnerHTML: { __html: '<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/>' } }),
+            TrendingUp: (props) => React.createElement('svg', { ...props, dangerouslySetInnerHTML: { __html: '<polyline points="15 17 20 12 15 7"/><path d="M18 13H4"/>' } }),
+            DollarSign: (props) => React.createElement('svg', { ...props, dangerouslySetInnerHTML: { __html: '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h1.5a3.5 3.5 0 0 1 0 7H6"/>' } }),
+            Users: (props) => React.createElement('svg', { ...props, dangerouslySetInnerHTML: { __html: '<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M17 14h6"/><path d="M22 17l-5-5-5 5"/>' } }),
+            Trophy: (props) => React.createElement('svg', { ...props, dangerouslySetInnerHTML: { __html: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M10 13V2.5a2.5 2.5 0 0 1 5 0V13"/><path d="M10 13h5.5l.5-4h-7l.5 4"/>' } }),
+            Hammer: (props) => React.createElement('svg', { ...props, dangerouslySetInnerHTML: { __html: '<path d="M13 2H9a2 2 0 0 0-2 2v7H2l5 5 5 5 5-5v-7a2 2 0 0 0-2-2h-4"/>' } }),
+            XCircle: (props) => React.createElement('svg', { ...props, dangerouslySetInnerHTML: { __html: '<circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6"/><path d="M9 9l6 6"/>' } }),
+            CheckCircle: (props) => React.createElement('svg', { ...props, dangerouslySetInnerHTML: { __html: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>' } }),
+            Search: (props) => React.createElement('svg', { ...props, dangerouslySetInnerHTML: { __html: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>' } }),
+            Users2: (props) => React.createElement('svg', { ...props, dangerouslySetInnerHTML: { __html: '<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M17 14h6"/><path d="M22 17l-5-5-5 5"/>' } }),
+            ShieldHalf: (props) => React.createElement('svg', { ...props, dangerouslySetInnerHTML: { __html: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 22V12h8"/>' } }),
+            LayoutDashboard: (props) => React.createElement('svg', { ...props, dangerouslySetInnerHTML: { __html: '<rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/>' } }),
+            Home: (props) => React.createElement('svg', { ...props, dangerouslySetInnerHTML: { __html: '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>' } }),
+            Gauge: (props) => React.createElement('svg', { ...props, dangerouslySetInnerHTML: { __html: '<path d="M12 15s3-2 3-5a3 3 0 0 0-6 0c0 3 3 5 3 5"/><path d="M15 13a4.5 4.5 0 0 0-6 0"/><path d="M3 13v-2h3"/><path d="M21 13v-2h-3"/><path d="M16 16.24l-2.24 2.24"/><path d="M8.24 16.24l2.24 2.24"/>' } }),
+            Upload: (props) => React.createElement('svg', { ...props, dangerouslySetInnerHTML: { __html: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>' } }),
+            ArrowRight: (props) => React.createElement('svg', { ...props, dangerouslySetInnerHTML: { __html: '<line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>' } }),
+            Rss: (props) => React.createElement('svg', { ...props, dangerouslySetInnerHTML: { __html: '<path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/>' } }),
+            Clock: (props) => React.createElement('svg', { ...props, dangerouslySetInnerHTML: { __html: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>' } }),
+            Edit: (props) => React.createElement('svg', { ...props, dangerouslySetInnerHTML: { __html: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>' } }),
+            Maximize: (props) => React.createElement('svg', { ...props, dangerouslySetInnerHTML: { __html: '<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>' } }),
+            List: (props) => React.createElement('svg', { ...props, dangerouslySetInnerHTML: { __html: '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>' } }),
+            PlusCircle: (props) => React.createElement('svg', { ...props, dangerouslySetInnerHTML: { __html: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>' } }),
+        };
+    </script>
+
+    <style>
+        /* Base Dark Mode Styling and Font Fixes */
+        body {
+            background-color: #0c0a09; /* Stone-900 / Near Black */
+            color: #f3f4f6; /* Gray-100 */
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        #root {
+            display: flex;
+            min-height: 100vh;
+            width: 100%; /* Ensures root takes full width */
+        }
+        /* Custom scrollbar for dark mode */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #4f46e5;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background-color: #1f2937;
+        }
+        /* Custom Neon Glow Animations for Premium Look */
+        @keyframes neon-glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(79, 70, 229, 0.5), 0 0 15px rgba(79, 70, 229, 0.3); }
+            50% { box-shadow: 0 0 3px rgba(79, 70, 229, 0.7), 0 0 10px rgba(79, 70, 229, 0.5); }
+        }
+        .shadow-neon-sm {
+            box-shadow: 0 0 10px rgba(79, 70, 229, 0.5);
+        }
+        .shadow-neon-lg {
+            box-shadow: 0 0 20px rgba(79, 70, 229, 0.8), 0 0 40px rgba(239, 68, 68, 0.5);
+        }
+        .shadow-neon-xl {
+            box-shadow: 0 0 30px rgba(79, 70, 229, 1), 0 0 60px rgba(239, 68, 68, 0.7);
+        }
+        .animate-pulse-bid {
+            animation: pulse 0.5s 3;
+        }
+    </style>
+</head>
+<body>
     <div id="root"></div>
-    <!-- CRITICAL FIX: The relative path is mandatory for some hosting services -->
-    <script type="module" src="./src/main.jsx"></script> 
-  </body>
+
+    <script type="text/babel">
+        // Set window scope for React components (needed for Babel)
+        const { useState, useEffect, useCallback, useMemo, useRef } = React;
+        const { LogIn, TrendingUp, DollarSign, Users, Trophy, Hammer, XCircle, CheckCircle, Search, Users2, ShieldHalf, LayoutDashboard, Home, Gauge, Upload, ArrowRight, Rss, Clock, Edit, Maximize, List, PlusCircle } = window.lucide;
+
+       // Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDCAxCJ3PsfcQsEFgrtMpAYSSIRBr4wpmQ",
+  authDomain: "apl-auction-2025.firebaseapp.com",
+  projectId: "apl-auction-2025",
+  storageBucket: "apl-auction-2025.firebasestorage.app",
+  messagingSenderId: "406168935600",
+  appId: "1:406168935600:web:a8a971576f1f784f172f75",
+  measurementId: "G-92W8PBTTPS"
+};
+
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.getFirestore(app);
+        const auth = firebase.getAuth(app);
+        firebase.setLogLevel('debug'); 
+
+        // --- AUCTION CONSTANTS ---
+        const ADMIN_KEY = 'APL_ADMIN_KEY'; 
+        const INITIAL_CAPITAL = 100000000; 
+        const AUCTION_DURATION_SECONDS = 40; 
+        const ANTI_SNIPE_WINDOW = 8; 
+        const ANTI_SNIPE_EXTENSION = 15; 
+        const APP_INSTANCE_ID = "apl_auction_platform_v2";
+
+        // Firestore Paths (using a static APP_INSTANCE_ID)
+        const PUBLIC_PATH = `artifacts/${APP_INSTANCE_ID}/public/data`;
+        const TEAMS_COLLECTION = `${PUBLIC_PATH}/teams`;
+        const PLAYERS_COLLECTION = `${PUBLIC_PATH}/players`;
+        const AUCTION_STATE_DOC = `${PUBLIC_PATH}/auction_state/current_auction`;
+        
+        // Auction States
+        const AUCTION_STATES = {
+            HOME: 'HOME', ADMIN_LOGIN: 'ADMIN_LOGIN', ADMIN: 'ADMIN', OWNER: 'OWNER', PROJECTOR: 'PROJECTOR',
+            TEAM_CLAIM: 'TEAM_CLAIM', PRE_AUCTION: 'PRE_AUCTION', BIDDING_ACTIVE: 'BIDDING_ACTIVE',
+            PLAYER_SOLD: 'PLAYER_SOLD', PLAYER_UNSOLD: 'PLAYER_UNSOLD', AUCTION_COMPLETE: 'AUCTION_COMPLETE',
+        };
+        const initialAuctionState = { status: AUCTION_STATES.PRE_AUCTION, currentPlayerId: null, highestTeamId: null, highestAmount: 0, auction_open: false, end_time: null, extensions_used: 0, lastSoldTeam: null, lastSoldPrice: 0, lastSoldPlayer: null };
+
+
+        // Initial Data Structure (10 IPL-Style Teams)
+        const INITIAL_TEAMS = [
+            { id: 't1', name: 'Chennai Superstars', maxCapital: INITIAL_CAPITAL, ownerName: 'Owner 1', color: 'text-yellow-400', logoUrl: 'https://placehold.co/60x60/facc15/000000?text=CS' },
+            { id: 't2', name: 'Mumbai Mighty', maxCapital: INITIAL_CAPITAL, ownerName: 'Owner 2', color: 'text-indigo-400', logoUrl: 'https://placehold.co/60x60/6366f1/ffffff?text=MM' },
+            { id: 't3', name: 'Royal Challengers APL', maxCapital: INITIAL_CAPITAL, ownerName: 'Owner 3', color: 'text-red-500', logoUrl: 'https://placehold.co/60x60/ef4444/ffffff?text=RCA' },
+            { id: 't4', name: 'Kolkata Knight Riders APL', maxCapital: INITIAL_CAPITAL, ownerName: 'Owner 4', color: 'text-purple-400', logoUrl: 'https://placehold.co/60x60/c084fc/ffffff?text=KKA' },
+            { id: 't5', name: 'Delhi Capitals APL', maxCapital: INITIAL_CAPITAL, ownerName: 'Owner 5', color: 'text-sky-400', logoUrl: 'https://placehold.co/60x60/38bdf8/ffffff?text=DCA' },
+            { id: 't6', name: 'Sunrisers Hyderabad APL', maxCapital: INITIAL_CAPITAL, ownerName: 'Owner 6', color: 'text-orange-400', logoUrl: 'https://placehold.co/60x60/fb923c/ffffff?text=SHA' },
+            { id: 't7', name: 'Punjab Kings APL', maxCapital: INITIAL_CAPITAL, ownerName: 'Owner 7', color: 'text-pink-500', logoUrl: 'https://placehold.co/60x60/d946ef/ffffff?text=PKA' },
+            { id: 't8', name: 'Gujarat Titans APL', maxCapital: INITIAL_CAPITAL, ownerName: 'Owner 8', color: 'text-cyan-400', logoUrl: 'https://placehold.co/60x60/06b6d4/000000?text=GTA' },
+            { id: 't9', name: 'Lucknow Super Giants APL', maxCapital: INITIAL_CAPITAL, ownerName: 'Owner 9', color: 'text-green-500', logoUrl: 'https://placehold.co/60x60/22c55e/ffffff?text=LSA' },
+            { id: 't10', name: 'Rajasthan Royals APL', maxCapital: INITIAL_CAPITAL, ownerName: 'Owner 10', color: 'text-gray-400', logoUrl: 'https://placehold.co/60x60/9ca3af/000000?text=RRA' },
+        ];
+
+        // Initial Player Data (IPL-Style)
+        const INITIAL_PLAYERS = [
+            { id: 'p1', name: 'Hardik P Clone', category: 'All-Rounder', basePrice: 40000000, points: 97, photoUrl: 'https://placehold.co/80x80/22d3ee/ffffff?text=HP', status: 'available', team_assigned: null, total_spent: 0 },
+            { id: 'p2', name: 'Jasprit B Clone', category: 'Bowler', basePrice: 30000000, points: 98, photoUrl: 'https://placehold.co/80x80/22d3ee/ffffff?text=JB', status: 'available', team_assigned: null, total_spent: 0 },
+            { id: 'p3', name: 'Virat K Clone', category: 'Batsman', basePrice: 35000000, points: 99, photoUrl: 'https://placehold.co/80x80/22d3ee/ffffff?text=VK', status: 'available', team_assigned: null, total_spent: 0 },
+            { id: 'p4', name: 'Rishabh P Clone', category: 'Wk-Batsman', basePrice: 28000000, points: 95, photoUrl: 'https://placehold.co/80x80/22d3ee/ffffff?text=RP', status: 'available', team_assigned: null, total_spent: 0 },
+            { id: 'p5', name: 'KL R Clone', category: 'Batsman', basePrice: 22000000, points: 92, photoUrl: 'https://placehold.co/80x80/22d3ee/ffffff?text=KLR', status: 'available', team_assigned: null, total_spent: 0 },
+            { id: 'p6', name: 'Suryakumar Y Clone', category: 'Batsman', basePrice: 18000000, points: 90, photoUrl: 'https://placehold.co/80x80/22d3ee/ffffff?text=SKY', status: 'available', team_assigned: null, total_spent: 0 },
+            { id: 'p7', name: 'Ravindra J Clone', category: 'All-Rounder', basePrice: 25000000, points: 94, photoUrl: 'https://placehold.co/80x80/22d3ee/ffffff?text=RJ', status: 'available', team_assigned: null, total_spent: 0 },
+            { id: 'p8', name: 'Shami A Clone', category: 'Bowler', basePrice: 15000000, points: 88, photoUrl: 'https://placehold.co/80x80/22d3ee/ffffff?text=SA', status: 'available', team_assigned: null, total_spent: 0 },
+            { id: 'p9', name: 'Shreyas I Clone', category: 'Batsman', basePrice: 12000000, points: 85, photoUrl: 'https://placehold.co/80x80/22d3ee/ffffff?text=SI', status: 'available', team_assigned: null, total_spent: 0 },
+            { id: 'p10', name: 'Bhuvi K Clone', category: 'Bowler', basePrice: 10000000, points: 82, photoUrl: 'https://placehold.co/80x80/22d3ee/ffffff?text=BK', status: 'available', team_assigned: null, total_spent: 0 },
+            { id: 'p11', name: 'Ishan K Clone', category: 'Wk-Batsman', basePrice: 15000000, points: 85, photoUrl: 'https://placehold.co/80x80/22d3ee/ffffff?text=IK', status: 'available', team_assigned: null, total_spent: 0 },
+            { id: 'p12', name: 'Deepak C Clone', category: 'All-Rounder', basePrice: 9000000, points: 79, photoUrl: 'https://placehold.co/80x80/22d3ee/ffffff?text=DC', status: 'available', team_assigned: null, total_spent: 0 },
+            { id: 'p13', name: 'Young Spin M', category: 'Bowler', basePrice: 5000000, points: 75, photoUrl: 'https://placehold.co/80x80/22d3ee/ffffff?text=YSM', status: 'available', team_assigned: null, total_spent: 0 },
+            { id: 'p14', name: 'Rookie Finisher', category: 'Batsman', basePrice: 4000000, points: 70, photoUrl: 'https://placehold.co/80x80/22d3ee/ffffff?text=RF', status: 'available', team_assigned: null, total_spent: 0 },
+        ];
+
+
+        // --- UTILITY FUNCTIONS ---
+        const formatCurrency = (amount) => {
+            if (typeof amount !== 'number') return '₹ N/A';
+            return new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 2,
+            }).format(amount / 10000000).replace('₹', '₹') + ' Cr';
+        };
+
+        const formatCurrencyFull = (amount) => {
+            if (typeof amount !== 'number') return '₹ N/A';
+            return new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                minimumFractionDigits: 0
+            }).format(amount);
+        };
+
+        const getNextBidIncrement = (currentBid) => {
+            if (currentBid < 5000000) return 100000;
+            if (currentBid < 10000000) return 250000;
+            if (currentBid < 50000000) return 500000;
+            return 1000000;
+        };
+
+        const playSound = (type) => {
+            console.log(`Playing sound: ${type}`);
+            try {
+                const audio = new Audio();
+                if (type === 'bid') {
+                    audio.volume = 0.5;
+                    audio.src = 'data:audio/wav;base64,UklGRl9HAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAAABkYXRhw0oGAAAeD4APgA+AAoACgAKACoAPgA8ACoAKgA+AD0APQA/AD8AOQA9ADwAPQA9AEEAQQA+AD4APwA+ACsAMQAqACUAKgApADsAOwA/AD8APQA9AD0APQA9AD8APwA/AD8APQA9AEEAQQA+AD4APwA+ACsAMQAqACUAKgApAAAA'; 
+                } else if (type === 'sold') {
+                    audio.volume = 0.8;
+                    audio.src = 'data:audio/wav;base64,UklGRl9IAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAAABkYXRhx0oGAAAoADsAOwA/AD8APQA9AD0APQA9AD8APwA/AD8APQA9AEEAQQA+AD4APwA+ACsAMQAqACUAKgApAD0AOwA/AD4APQA9AD0APQA/AD8APwA/AD8APQA9AEEAQQA+AD4APwA+ACsAMQAqACUAKgApAAAA';
+                }
+                audio.play().catch(e => console.log("Audio playback failed: ", e.message));
+            } catch (e) {
+                console.error("Audio failed to load.", e);
+            }
+        };
+
+
+        // --- DATABASE INITIALIZATION ---
+        const initializeDatabase = async (dbInstance) => {
+            const teamsRef = firebase.collection(dbInstance, TEAMS_COLLECTION);
+            const playersRef = firebase.collection(dbInstance, PLAYERS_COLLECTION);
+            const auctionRef = firebase.doc(dbInstance, AUCTION_STATE_DOC);
+
+            const teamDocs = await firebase.getDocs(teamsRef);
+            const playerDocs = await firebase.getDocs(playersRef);
+            const auctionDoc = await firebase.getDoc(auctionRef);
+
+            const batch = firebase.writeBatch(dbInstance);
+            let needsWrite = false;
+
+            if (teamDocs.empty) {
+                INITIAL_TEAMS.forEach(team => {
+                    batch.set(firebase.doc(teamsRef, team.id), { ...team, currentCapital: team.maxCapital, players_count: 0, total_spent: 0, roster: [], ownerId: null });
+                });
+                needsWrite = true;
+            }
+
+            if (playerDocs.empty) {
+                INITIAL_PLAYERS.forEach(player => {
+                    batch.set(firebase.doc(playersRef, player.id), player);
+                });
+                needsWrite = true;
+            }
+
+            if (!auctionDoc.exists()) {
+                batch.set(auctionRef, initialAuctionState);
+                needsWrite = true;
+            }
+
+            if (needsWrite) {
+                await batch.commit();
+                console.log("Database initialization complete.");
+            }
+        };
+        
+        // --- CORE UTILITY COMPONENTS ---
+
+        const ToastNotification = ({ message, type, onClose }) => {
+            useEffect(() => {
+                const timer = setTimeout(onClose, 4000);
+                return () => clearTimeout(timer);
+            }, [onClose]);
+
+            const color = type === 'error' ? 'bg-red-600' : type === 'success' ? 'bg-green-600' : 'bg-indigo-600';
+
+            return (
+                <div className={`fixed bottom-4 right-4 p-4 rounded-xl shadow-2xl text-white ${color} transition-all duration-300 transform z-50`}>
+                    {message}
+                </div>
+            );
+        };
+        
+        const CountdownTimer = ({ endTime, auctionState, onTimeout }) => {
+            const [timeLeft, setTimeLeft] = useState(0);
+            const auctionStateRef = useRef(auctionState);
+            auctionStateRef.current = auctionState; 
+
+            const isBiddingActive = auctionState?.status === AUCTION_STATES.BIDDING_ACTIVE;
+            const isAntiSnipe = timeLeft <= ANTI_SNIPE_WINDOW && timeLeft > 0;
+
+            useEffect(() => {
+                if (!isBiddingActive || !endTime) {
+                    setTimeLeft(AUCTION_DURATION_SECONDS);
+                    return;
+                }
+
+                let targetTime = endTime;
+                if (targetTime && targetTime.toDate) {
+                    targetTime = targetTime.toDate().getTime();
+                } else if (typeof targetTime === 'string') {
+                    targetTime = new Date(targetTime).getTime();
+                }
+
+                const interval = setInterval(() => {
+                    const now = Date.now();
+                    const remaining = Math.max(0, Math.floor((targetTime - now) / 1000));
+                    setTimeLeft(remaining);
+
+                    if (remaining === 0) {
+                        clearInterval(interval);
+                        if (auctionStateRef.current.status === AUCTION_STATES.BIDDING_ACTIVE) {
+                            onTimeout();
+                        }
+                    }
+                }, 100);
+
+                return () => clearInterval(interval);
+            }, [isBiddingActive, endTime, onTimeout, auctionState.extensions_used]);
+
+            const initialDuration = AUCTION_DURATION_SECONDS + (auctionState.extensions_used * ANTI_SNIPE_EXTENSION);
+            const currentProgress = (timeLeft / initialDuration) * 100;
+            
+            const timerColor = isAntiSnipe ? 'text-red-500' : 'text-green-400';
+            const progressColor = isAntiSnipe ? '#f87171' : '#4ade80';
+
+            return (
+                <div className="relative flex items-center justify-center w-24 h-24 mx-auto md:w-32 md:h-32">
+                    <svg viewBox="0 0 36 36" className="w-full h-full transform -rotate-90">
+                        <path
+                            className="text-gray-700/50"
+                            fill="none"
+                            strokeWidth="3.8"
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                        <path
+                            className="transition-all duration-1000 ease-linear"
+                            stroke={progressColor}
+                            strokeLinecap="round"
+                            strokeWidth="3.8"
+                            strokeDasharray={`${currentProgress}, 100`}
+                            fill="none"
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                    </svg>
+                    <div className={`absolute flex flex-col items-center justify-center ${timerColor}`}>
+                        <Clock className="w-5 h-5 mb-1" />
+                        <span className="text-3xl font-black">{timeLeft}</span>
+                        {isAntiSnipe && <span className="text-xs font-bold text-yellow-400 mt-1 animate-pulse">+ {ANTI_SNIPE_EXTENSION}s SNIPE GUARD</span>}
+                    </div>
+                </div>
+            );
+        };
+
+        const StatCard = ({ title, value, icon: Icon, color }) => (
+            <div className={`p-4 bg-gray-800 shadow-xl rounded-xl border-t-4 border-indigo-500 transition hover:shadow-neon-sm`}>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <p className="text-sm font-medium text-gray-500 uppercase">{title}</p>
+                        <p className={`text-2xl font-bold ${color} mt-1`}>{value}</p>
+                    </div>
+                    <Icon className={`w-8 h-8 ${color}`} />
+                </div>
+            </div>
+        );
+
+
+        // --- VIEW COMPONENTS ---
+
+        const ModeButton = ({ icon: Icon, label, color, onClick }) => (
+            <button 
+                onClick={onClick}
+                className={`p-6 rounded-xl shadow-lg transform hover:scale-[1.02] transition duration-300 ease-in-out 
+                           ${color} text-white font-bold flex flex-col items-center space-y-2 group w-full`}
+                style={{ boxShadow: `0 0 15px ${color.replace('bg-', 'var(--tw-shadow-color-')})` }}
+            >
+                <Icon className="w-8 h-8 group-hover:animate-pulse" />
+                <span className="text-sm">{label}</span>
+            </button>
+        );
+
+        const HomePage = ({ setMode, allTeams, userId }) => (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 text-white p-8 font-sans w-full">
+                <div className="text-center mb-12">
+                    <h1 className="text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-pink-500 mb-2">
+                        Preet's Auction Platform
+                    </h1>
+                    <p className="text-2xl font-light text-gray-400">
+                        A U C T I O N E E R I N G &nbsp; T H E &nbsp; **Aqua Premier League**
+                    </p>
+                    <p className="mt-4 text-xs text-gray-500">
+                        Your Current User ID: <span className="font-mono bg-gray-800 p-1 rounded">{userId}</span>
+                    </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 w-full max-w-4xl">
+                    <ModeButton icon={LayoutDashboard} label="Team Owner / Captain" color="bg-indigo-600" onClick={() => setMode(AUCTION_STATES.TEAM_CLAIM)} />
+                    <ModeButton icon={Hammer} label="Admin / Auctioneer" color="bg-red-600" onClick={() => setMode(AUCTION_STATES.ADMIN_LOGIN)} />
+                    <ModeButton icon={Maximize} label="Projector View" color="bg-emerald-600" onClick={() => setMode(AUCTION_STATES.PROJECTOR)} />
+                    <ModeButton icon={Users} label="View Teams" color="bg-gray-600" onClick={() => setMode(AUCTION_STATES.TEAM_CLAIM)} />
+                </div>
+                
+                <div className="mt-12 text-center text-gray-500">
+                     <p className="font-semibold text-xl mb-2">Total Teams Registered: {allTeams.filter(t => t.ownerId).length} / {INITIAL_TEAMS.length}</p>
+                </div>
+            </div>
+        );
+        
+        const AdminLogin = ({ setMode, handleAdminKeySubmit, adminKeyInput, setAdminKeyInput }) => (
+            <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white p-8 w-full">
+                <div className="p-10 bg-gray-800 rounded-xl shadow-neon-lg border border-red-500/50 max-w-md w-full">
+                    <h2 className="text-3xl font-extrabold text-red-400 mb-6 text-center flex items-center justify-center">
+                        <ShieldHalf className='w-6 h-6 mr-2' /> Admin Access Required
+                    </h2>
+                    <p className='text-gray-400 mb-4 text-center'>
+                        Admin Key: <span className='font-mono text-white bg-gray-700 px-2 py-1 rounded'>{ADMIN_KEY}</span>
+                    </p>
+                    <form onSubmit={handleAdminKeySubmit} className="space-y-4">
+                        <input 
+                            type="password"
+                            placeholder={`Enter Admin Key`}
+                            value={adminKeyInput}
+                            onChange={(e) => setAdminKeyInput(e.target.value)}
+                            className="w-full p-3 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-red-500 focus:border-red-500"
+                        />
+                        <button 
+                            type="submit" 
+                            className="w-full py-3 rounded-lg font-bold text-white bg-red-600 hover:bg-red-700 transition"
+                        >
+                            Unlock Admin Panel
+                        </button>
+                    </form>
+                    <button onClick={() => setMode(AUCTION_STATES.HOME)} className="mt-6 text-indigo-400 hover:text-indigo-300 transition flex items-center justify-center w-full">
+                        <ArrowRight className='w-4 h-4 mr-2 rotate-180'/> Back to Home
+                    </button>
+                </div>
+            </div>
+        );
+
+        // Placeholder components to prevent runtime errors (replace with full logic later)
+        const ProjectorView = ({ setMode }) => (
+            <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white w-full">
+                <div className="text-center p-8 bg-gray-800 rounded-xl shadow-neon-lg">
+                    <h2 className="text-4xl font-bold text-emerald-400">PROJECTOR VIEW</h2>
+                    <p className="text-gray-300 mt-4">Screen is ready for display.</p>
+                    <button onClick={() => setMode(AUCTION_STATES.HOME)} className="mt-6 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
+                        Back to Home
+                    </button>
+                </div>
+            </div>
+        );
+        const OwnerDashboard = ({ setMode }) => (
+            <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white w-full">
+                <div className="text-center p-8 bg-gray-800 rounded-xl shadow-neon-lg">
+                    <h2 className="text-4xl font-bold text-indigo-400">OWNER DASHBOARD</h2>
+                    <p className="text-gray-300 mt-4">Simulating live bidding for claimed team.</p>
+                    <button onClick={() => setMode(AUCTION_STATES.HOME)} className="mt-6 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
+                        Back to Home
+                    </button>
+                </div>
+            </div>
+        );
+        const AdminPage = ({ setMode }) => (
+            <div className="min-h-screen bg-gray-900 text-white p-4 md:p-8 font-sans w-full">
+                <div className="text-center p-8 bg-gray-800 rounded-xl shadow-neon-lg border border-red-500/50">
+                    <p className="text-2xl font-bold text-red-400">ADMIN CONTROL PANEL</p>
+                    <p className="text-gray-400 mt-2">Simulating full control UI.</p>
+                    <button onClick={() => setMode(AUCTION_STATES.HOME)} className="mt-6 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition flex items-center justify-center mx-auto">
+                        <Home className="w-4 h-4 mr-2" /> Exit Admin
+                    </button>
+                </div>
+            </div>
+        );
+
+
+        // --- MAIN APPLICATION LOGIC ---
+        const App = () => {
+            const [isAuthReady, setIsAuthReady] = useState(false);
+            const [userId, setUserId] = useState(null);
+            const [mode, setMode] = useState(AUCTION_STATES.HOME); 
+            const [allTeams, setAllTeams] = useState(INITIAL_TEAMS);
+            const [toast, setToast] = useState(null);
+            const [isAdmin, setIsAdmin] = useState(false);
+            const [adminKeyInput, setAdminKeyInput] = useState('');
+            
+            const handleAdminKeySubmit = (e) => {
+                e.preventDefault();
+                if (adminKeyInput === ADMIN_KEY) {
+                    setIsAdmin(true);
+                    setMode(AUCTION_STATES.ADMIN);
+                    setToast({ message: "Admin access granted!", type: 'success' });
+                    setAdminKeyInput('');
+                } else {
+                    setToast({ message: "Invalid Admin Key.", type: 'error' });
+                }
+            };
+
+            // Authentication & Initialization
+            useEffect(() => {
+                const initAuth = async () => {
+                    try {
+                        await firebase.signInAnonymously(auth);
+                    } catch (e) {
+                        console.error("Firebase Auth Error:", e);
+                    }
+                };
+
+                const unsubscribe = firebase.onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        setUserId(user.uid);
+                        // Only run DB init once auth is ready
+                        try {
+                           await initializeDatabase(db);
+                           const teamsRef = firebase.collection(db, TEAMS_COLLECTION);
+                           firebase.onSnapshot(teamsRef, (snapshot) => {
+                               const teamsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                               setAllTeams(teamsData);
+                           });
+                        } catch(e) {
+                           console.error("DB Init Error:", e);
+                        }
+                    } else {
+                        setUserId(crypto.randomUUID());
+                    }
+                    setIsAuthReady(true);
+                });
+
+                initAuth();
+                return () => unsubscribe();
+            }, []);
+
+            if (!isAuthReady) {
+                return (
+                    <div className="flex items-center justify-center min-h-screen bg-gray-900 w-full">
+                        <div className="text-center p-8 bg-gray-800 rounded-xl shadow-xl">
+                            <RefreshCcw className="w-8 h-8 mx-auto animate-spin text-indigo-400 mb-3" />
+                            <p className="text-lg font-semibold text-gray-300">Establishing real-time connection...</p>
+                        </div>
+                    </div>
+                );
+            }
+            
+            let currentView;
+            switch (mode) {
+                case AUCTION_STATES.ADMIN_LOGIN:
+                    currentView = <AdminLogin setMode={setMode} handleAdminKeySubmit={handleAdminKeySubmit} adminKeyInput={adminKeyInput} setAdminKeyInput={setAdminKeyInput} />;
+                    break;
+                case AUCTION_STATES.ADMIN:
+                    currentView = <AdminPage setMode={setMode} />;
+                    break;
+                case AUCTION_STATES.PROJECTOR:
+                    currentView = <ProjectorView setMode={setMode} />;
+                    break;
+                case AUCTION_STATES.OWNER:
+                case AUCTION_STATES.TEAM_CLAIM: // Reroute to Team Claim logic
+                    // The Claim logic would be embedded here, but for demonstration, we show the homepage/owner placeholder
+                    currentView = <HomePage setMode={setMode} allTeams={allTeams} userId={userId} />;
+                    break;
+                case AUCTION_STATES.HOME:
+                default:
+                    currentView = <HomePage setMode={setMode} allTeams={allTeams} userId={userId} />;
+                    break;
+            }
+
+            return (
+                <>
+                    {currentView}
+                    {toast && <ToastNotification message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+                </>
+            );
+        };
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
 </html>
